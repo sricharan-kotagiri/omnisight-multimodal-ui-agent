@@ -1,31 +1,43 @@
 
 from ai_self_healing.validator import validate_locator
 
-# Sample webpage DOM
+
 dom_content = """
 <html>
 <body>
-    <h1>Welcome</h1>
     <button id="signin-btn">Login</button>
-    <button class="signup-btn">Sign Up</button>
+    <button id="signin-btn">Sign In</button>
 </body>
 </html>
 """
 
-# Test 1: Existing ID
-print("\n========== TEST 1: ID LOCATOR ==========")
-
+# Test 1: Duplicate locator
 result = validate_locator("#signin-btn", dom_content)
+
+print("Duplicate Locator Test:")
 print(result)
 
-# Test 2: Existing class
-print("\n========== TEST 2: CLASS LOCATOR ==========")
+assert result["valid"] is False
+assert result["match_count"] == 2
 
-result = validate_locator(".signup-btn", dom_content)
+print("Duplicate locator correctly rejected!")
+
+
+# Test 2: Unique locator
+unique_dom = """
+<html>
+<body>
+    <button id="signin-btn">Login</button>
+</body>
+</html>
+"""
+
+result = validate_locator("#signin-btn", unique_dom)
+
+print("\nUnique Locator Test:")
 print(result)
 
-# Test 3: Missing ID
-print("\n========== TEST 3: INVALID LOCATOR ==========")
+assert result["valid"] is True
+assert result["match_count"] == 1
 
-result = validate_locator("#login-btn", dom_content)
-print(result)
+print("Unique locator successfully validated!")
