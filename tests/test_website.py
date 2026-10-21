@@ -1,14 +1,9 @@
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Page, expect
 
 
-def test_website_title():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+def test_example_website_title(page: Page):
+    page.goto("https://example.com")
 
-        page.goto("https://example.com")
-
-        assert page.title() == "Example Domain"
-
-        browser.close()
+    expect(page).to_have_title("Example Domain")
+    expect(page.get_by_role("heading", name="Example Domain")).to_be_visible()
