@@ -21,3 +21,14 @@ def test_example_website_has_description(page: Page):
     description = page.locator("p")
     expect(description.first).to_be_visible()
     expect(description.first).not_to_be_empty()
+
+
+
+def test_example_website_link(page: Page):
+    page.goto("https://example.com")
+
+    link = page.get_by_role("link", name="Learn more")
+
+    expect(link).to_be_visible()
+    expect(link).to_have_attribute("href", "https://iana.org/domains/example")
+
