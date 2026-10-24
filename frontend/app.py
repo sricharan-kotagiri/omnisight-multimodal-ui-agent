@@ -36,14 +36,48 @@ st.markdown(
 )
 
 
-def demo_result(site_url: str, task: str) -> dict[str, Any]:
+def demo_result(site_url: str, task: str, scenario: str) -> dict[str, Any]:
+    """Return a clearly labelled sample run for the selected dashboard state."""
     now = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-    return {
-        "run_id": "demo-001",
+    base = {
+        "run_id": f"demo-{scenario.split()[0].lower()}",
         "url": site_url,
         "task": task,
-        "status": "recovered",
+        "demo_scenario": scenario,
         "screenshot_path": str(DEMO_SCREENSHOT),
+    }
+
+    if scenario == "Successful run":
+        return {
+            **base,
+            "status": "completed",
+            "actions": [
+                {"time": now, "action": "Open target page", "status": "passed", "details": site_url},
+                {"time": now, "action": "Find product", "status": "passed", "details": "Product card was visible"},
+                {"time": now, "action": "Add item to cart", "status": "passed", "details": "Cart count updated to 1"},
+                {"time": now, "action": "Open checkout", "status": "passed", "details": "Checkout page opened"},
+            ],
+        }
+
+    if scenario == "Failed run":
+        return {
+            **base,
+            "status": "failed",
+            "failure": {"message": "The checkout button was not found after the page loaded."},
+            "recovery": {
+                "suggestion": "No reliable alternative locator was verified. Check whether the page layout changed.",
+                "confidence": 0.38,
+            },
+            "actions": [
+                {"time": now, "action": "Open target page", "status": "passed", "details": site_url},
+                {"time": now, "action": "Find checkout button", "status": "failed", "details": "No matching button was found"},
+                {"time": now, "action": "Attempt recovery", "status": "failed", "details": "No alternative locator passed verification"},
+            ],
+        }
+
+    return {
+        **base,
+        "status": "recovered",
         "failure": {"message": "The original CSS locator did not match an element."},
         "recovery": {"suggestion": "Retry using the accessible button name 'Checkout'.", "confidence": 0.92},
         "actions": [
@@ -153,9 +187,15 @@ with st.sidebar:
     st.markdown("## 🔭 OmniSight")
     st.caption("Visual browser QA dashboard")
     mode = st.radio("Connection mode", ["Demo preview", "Live backend"], index=0)
+    demo_scenario = "Recovered run"
     if mode == "Demo preview":
         st.success("Sample data only")
-        st.caption("Preview the dashboard without starting a browser or backend.")
+        demo_scenario = st.selectbox(
+            "Preview outcome",
+            ["Recovered run", "Successful run", "Failed run"],
+            help="Preview each result state without a running backend.",
+        )
+        st.caption("Demo runs do not launch a browser or call the backend.")
     else:
         st.session_state.api_base_url = st.text_input(
             "FastAPI base URL", value=st.session_state.api_base_url,
@@ -188,7 +228,7 @@ if submitted:
         try:
             with st.spinner("Starting browser automation..."):
                 if mode == "Demo preview":
-                    st.session_state.run_result = demo_result(site_url.strip(), task.strip())
+                    st.session_state.run_result = demo_result(site_url.strip(), task.strip(), demo_scenario)
                 else:
                     st.session_state.run_result = start_run(st.session_state.api_base_url, site_url.strip(), task.strip())
         except ApiClientError as exc:
@@ -206,7 +246,7 @@ else:
     st.subheader("Latest run")
     status_notice(status)
     if st.session_state.run_mode == "Demo preview":
-        st.caption("Demo preview: this run and screenshot are sample data.")
+        st.caption(f"Demo preview: {result.get('demo_scenario', 'sample run').lower()} and screenshot are sample data.")
 
     id_col, target_col = st.columns([1, 2])
     id_col.metric("Run ID", run_id)

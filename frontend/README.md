@@ -1,6 +1,6 @@
 # OmniSight Streamlit Frontend
 
-The dashboard starts browser runs and displays their status, screenshots, action history, failures, and recovery suggestions. Demo preview mode uses sample data and does not call the backend.
+The dashboard starts browser runs and displays their status, screenshots, action history, failures, and recovery suggestions. Demo preview mode offers successful, failed, and recovered sample runs without calling the backend.
 
 ## Run locally from the repository root
 
