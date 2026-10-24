@@ -1,9 +1,11 @@
+
 from bs4 import BeautifulSoup
+from lxml import etree
+import re
 
 
 def validate_locator(locator, dom_content):
 
-    # Step 1: Check locator
     if not locator:
         return {
             "valid": False,
@@ -11,7 +13,6 @@ def validate_locator(locator, dom_content):
             "match_count": 0
         }
 
-    # Step 2: Check DOM content
     if not dom_content:
         return {
             "valid": False,
@@ -19,16 +20,45 @@ def validate_locator(locator, dom_content):
             "match_count": 0
         }
 
-    # Step 3: Parse HTML
     try:
+
         soup = BeautifulSoup(dom_content, "html.parser")
 
-        # Step 4: Find matching elements
-        elements = soup.select(locator)
+        # Detect XPath locator
+        if locator.startswith("/") or locator.startswith("("):
 
+            parser = etree.HTMLParser()
+            tree = etree.HTML(dom_content, parser)
+
+            elements = tree.xpath(locator)
+
+            match_count = len(elements)
+
+            if match_count == 0:
+                return {
+                    "valid": False,
+                    "message": "XPath locator not found in DOM",
+                    "match_count": 0
+                }
+
+            if match_count > 1:
+                return {
+                    "valid": False,
+                    "message": "XPath locator is ambiguous",
+                    "match_count": match_count
+                }
+
+            return {
+                "valid": True,
+                "message": "Unique XPath locator found in DOM",
+                "element": elements[0].tag,
+                "match_count": 1
+            }
+
+        # CSS selector validation
+        elements = soup.select(locator)
         match_count = len(elements)
 
-        # Step 5: No matching element
         if match_count == 0:
             return {
                 "valid": False,
@@ -36,7 +66,6 @@ def validate_locator(locator, dom_content):
                 "match_count": 0
             }
 
-        # Step 6: Multiple matching elements
         if match_count > 1:
             return {
                 "valid": False,
@@ -44,7 +73,6 @@ def validate_locator(locator, dom_content):
                 "match_count": match_count
             }
 
-        # Step 7: Exactly one matching element
         return {
             "valid": True,
             "message": "Unique locator found in DOM",

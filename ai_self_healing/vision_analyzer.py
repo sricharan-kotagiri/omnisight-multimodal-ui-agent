@@ -1,4 +1,6 @@
+
 from ai_self_healing.config import client
+from ai_self_healing.prompt import build_vision_prompt
 from google.genai import types
 from pathlib import Path
 
@@ -14,31 +16,10 @@ def analyze_ui_screenshot(
     if not image_path.exists():
         raise FileNotFoundError("Screenshot not found!")
 
-    prompt = f"""
-You are a Multimodal AI UI Self-Healing Agent.
-
-Analyze the website screenshot and DOM content.
-
-BROWSER ERROR:
-{error_message}
-
-DOM CONTENT:
-{dom_content[:12000]}
-
-Identify:
-1. What visual or UI issue is visible?
-2. Which UI element is affected?
-3. What could have caused the browser failure?
-4. Suggest a reliable alternative locator using the DOM.
-
-Return:
-
-Visual Issue:
-Affected Element:
-Possible Cause:
-Suggested Locator:
-Reason:
-"""
+    prompt = build_vision_prompt(
+        browser_error=error_message,
+        dom_content=dom_content[:12000]
+    )
 
     image_part = types.Part.from_bytes(
         data=image_path.read_bytes(),
