@@ -5,6 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
+artifacts/
+playwright_test.py
 
 # Distribution / packaging
 .Python
