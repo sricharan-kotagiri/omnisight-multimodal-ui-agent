@@ -1,12 +1,16 @@
 # OmniSight Streamlit Frontend
 
-The dashboard starts browser runs and displays their status, screenshots, action history, failures, and recovery suggestions. Demo preview mode offers successful, failed, and recovered sample runs without calling the backend.
+The dashboard starts browser runs and displays their status, screenshots, action history, failures, and recovery suggestions. Demo preview mode offers successful, failed, and recovered sample runs without calling the backend. Live mode checks the FastAPI health endpoint and OpenAPI document before enabling run submission.
 
 ## Run locally from the repository root
 
     py -m venv .venv
     .\.venv\Scripts\python.exe -m pip install -r frontend\requirements.txt
     .\.venv\Scripts\python.exe -m streamlit run frontend\app.py
+
+## Current backend status
+
+The current ai-self-healing branch contains a FastAPI skeleton with GET / and GET /health. It defines recovery request and response schemas, but does not currently expose POST /runs or GET /runs/{run_id}. Live mode disables run submission until both required run operations appear in FastAPI OpenAPI. The available recovery schemas accept url and failed_locator and return success, message, old_locator, new_locator, and browser_validation; this differs from the dashboard run request, which currently sends url and task.
 
 ## Backend contract for Live mode
 

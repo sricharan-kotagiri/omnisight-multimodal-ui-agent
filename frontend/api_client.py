@@ -37,6 +37,27 @@ def _request_json(method: str, url: str, *, timeout: float = 20, **kwargs: Any) 
     return payload
 
 
+def get_health(api_base_url: str) -> dict[str, Any]:
+    """Read the backend health endpoint."""
+    base_url = api_base_url.strip().rstrip("/")
+    if not base_url:
+        raise ApiClientError("Enter the address of the OmniSight API.")
+    return _request_json("GET", f"{base_url}/health", timeout=5)
+
+
+def get_api_paths(api_base_url: str) -> dict[str, Any]:
+    """Read documented FastAPI operations from its OpenAPI document."""
+    base_url = api_base_url.strip().rstrip("/")
+    if not base_url:
+        raise ApiClientError("Enter the address of the OmniSight API.")
+
+    document = _request_json("GET", f"{base_url}/openapi.json", timeout=5)
+    paths = document.get("paths")
+    if not isinstance(paths, dict):
+        raise ApiClientError("The backend OpenAPI document did not contain an API paths object.")
+    return paths
+
+
 def start_run(api_base_url: str, site_url: str, task: str) -> dict[str, Any]:
     """Create a browser run using POST /runs."""
     parsed = urlparse(site_url.strip())

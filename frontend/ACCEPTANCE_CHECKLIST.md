@@ -6,4 +6,5 @@
 - [ ] Display screenshots with their related action history.
 - [ ] Show failures and recovery suggestions with confidence scores.
 - [ ] Handle empty results and backend connection errors clearly.
+- [ ] Check backend health and advertised run endpoints before enabling Live submission.
 - [ ] Keep the dashboard usable on desktop and mobile.

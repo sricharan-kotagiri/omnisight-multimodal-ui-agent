@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 import streamlit as st
 
-from api_client import ApiClientError, get_run, start_run
+from api_client import ApiClientError, get_api_paths, get_health, get_run, start_run
 
 APP_DIR = Path(__file__).resolve().parent
 DEMO_SCREENSHOT = APP_DIR / "assets" / "demo-screenshot.svg"
@@ -183,6 +183,11 @@ if "run_mode" not in st.session_state:
 if "api_base_url" not in st.session_state:
     st.session_state.api_base_url = os.getenv("OMNISIGHT_API_URL", "http://127.0.0.1:8000")
 
+if "api_connection" not in st.session_state:
+    st.session_state.api_connection = None
+
+live_run_available = False
+
 with st.sidebar:
     st.markdown("## 🔭 OmniSight")
     st.caption("Visual browser QA dashboard")
@@ -201,7 +206,56 @@ with st.sidebar:
             "FastAPI base URL", value=st.session_state.api_base_url,
             help="For example: http://127.0.0.1:8000",
         )
-        st.info("Live mode expects POST /runs and GET /runs/{run_id}.")
+        current_api_url = st.session_state.api_base_url.strip().rstrip("/")
+        if st.button("Check backend connection", use_container_width=True):
+            try:
+                health = get_health(current_api_url)
+                health_status = str(health.get("status") or "unknown").strip().lower()
+                api_paths = get_api_paths(current_api_url)
+                run_operations = api_paths.get("/runs", {})
+                run_status_operations = api_paths.get("/runs/{run_id}", {})
+                has_run_create = isinstance(run_operations, dict) and "post" in run_operations
+                has_run_status = isinstance(run_status_operations, dict) and "get" in run_status_operations
+                missing = []
+                if health_status not in {"healthy", "active", "ok"}:
+                    missing.append("healthy backend status")
+                if not has_run_create:
+                    missing.append("POST /runs")
+                if not has_run_status:
+                    missing.append("GET /runs/{run_id}")
+                st.session_state.api_connection = {
+                    "base_url": current_api_url,
+                    "health_status": health_status,
+                    "run_available": not missing,
+                    "missing": missing,
+                    "error": None,
+                }
+            except ApiClientError as exc:
+                st.session_state.api_connection = {
+                    "base_url": current_api_url,
+                    "health_status": "unavailable",
+                    "run_available": False,
+                    "missing": [],
+                    "error": str(exc),
+                }
+
+        connection = st.session_state.api_connection
+        if not connection or connection.get("base_url") != current_api_url:
+            st.caption("Check the connection to read this backend's status and available endpoints.")
+        elif connection.get("error"):
+            st.error("Could not connect to the backend.")
+            st.caption(connection["error"])
+        else:
+            health_status = connection.get("health_status", "unknown")
+            if health_status in {"healthy", "active", "ok"}:
+                st.success(f"Backend status: {health_status.title()}")
+            else:
+                st.warning(f"Backend responded with status: {health_status}")
+            live_run_available = bool(connection.get("run_available"))
+            if live_run_available:
+                st.info("Run submission and status endpoints are available.")
+            else:
+                st.warning("Live runs are unavailable. Missing: " + ", ".join(connection.get("missing", [])))
 
 st.markdown('<div class="eyebrow">AUTONOMOUS BROWSER QA</div>', unsafe_allow_html=True)
 st.title("Run and review a browser check")
@@ -214,7 +268,7 @@ with st.form("run_form", clear_on_submit=False):
         site_url = st.text_input("Website URL", placeholder="https://example.com")
     with task_col:
         task = st.text_input("Task", placeholder="For example: add an item to the cart and open checkout")
-    submitted = st.form_submit_button("Run automation", type="primary")
+    submitted = st.form_submit_button("Run automation", type="primary", disabled=(mode == "Live backend" and not live_run_available))
 
 if submitted:
     parsed = urlparse(site_url.strip())
