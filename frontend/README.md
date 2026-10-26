@@ -1,25 +1,36 @@
-# OmniSight Streamlit Frontend
+# OmniSight Self-Healing Dashboard
 
-The dashboard starts browser runs and displays their status, screenshots, action history, failures, and recovery suggestions. Demo preview mode offers successful, failed, and recovered sample runs without calling the backend. Live mode checks the FastAPI health endpoint and OpenAPI document before enabling run submission.
+The Streamlit dashboard follows the FastAPI self-healing module. It accepts a website URL and a failed Playwright locator, then displays the backend's recovery result and browser validation. Demo preview mode shows sample success and failure results without calling the API.
 
-## Run locally from the repository root
+## Run locally
 
-    py -m venv .venv
-    .\.venv\Scripts\python.exe -m pip install -r frontend\requirements.txt
-    .\.venv\Scripts\python.exe -m streamlit run frontend\app.py
+From the repository root in PowerShell:
 
-## Current backend status
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r frontend\requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run frontend\app.py
+```
 
-The current ai-self-healing branch contains a FastAPI skeleton with GET / and GET /health. It defines recovery request and response schemas, but does not currently expose POST /runs or GET /runs/{run_id}. Live mode disables run submission until both required run operations appear in FastAPI OpenAPI. The available recovery schemas accept url and failed_locator and return success, message, old_locator, new_locator, and browser_validation; this differs from the dashboard run request, which currently sends url and task.
+The dashboard's default API address is `http://127.0.0.1:8000`. The backend must be running on the same computer for that local address to work. The address can be changed in the dashboard or set with `OMNISIGHT_API_URL`.
 
-## Backend contract for Live mode
+The shared light canvas, teal accent, and dark sidebar theme are configured in `.streamlit/config.toml`. The dashboard uses native Streamlit controls so the visual structure stays easy to maintain.
 
-- POST /runs receives JSON with url and task fields.
-- Its response is a JSON object with run_id (or id) and status.
-- GET /runs/{run_id} returns the latest run result.
-- Optional fields: url, screenshot_url or screenshot_base64, actions (or action_history), failure (or error), and recovery / recovery_suggestion.
-- A recovery object may contain suggestion and confidence (0-1 or 0-100).
+## Current backend integration
 
-Agree on endpoint and field names with the backend owner. Update api_client.py if the backend contract differs. Prefer screenshot URLs or base64 image data over backend-local file paths.
+The current FastAPI app exposes `GET /` and `GET /health`. The dashboard checks those health and OpenAPI endpoints. It enables live recovery only after FastAPI publishes `POST /recover` in `/openapi.json`.
 
-Set OMNISIGHT_API_URL to choose the default FastAPI base URL. Keep credentials and .streamlit/secrets.toml out of Git.
+The backend's declared recovery request is:
+
+```json
+{
+  "url": "https://example.com",
+  "failed_locator": "button.checkout"
+}
+```
+
+The declared response fields are `success`, `message`, `old_locator`, `new_locator`, and `browser_validation`. The dashboard also displays optional `recovery_plan` and screenshot fields if the endpoint returns them. The current response schema does not declare confidence, action history, or screenshots, so the dashboard does not expect those fields.
+
+The `/recover` route is still being implemented. Until it appears in the OpenAPI document and returns the declared recovery response, use Demo preview mode. The Gemini API key stays in the backend; the frontend does not need or store it.
+
+Open the backend's Swagger page at `http://127.0.0.1:8000/docs` to inspect the routes published by the running API.
