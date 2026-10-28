@@ -1,3 +1,4 @@
+
 from pathlib import Path
 from uuid import uuid4
 
@@ -16,7 +17,6 @@ app = FastAPI(
 )
 
 
-# Allow local frontend development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -46,69 +46,69 @@ def health_check():
 
 @app.post("/recover", response_model=RecoveryResponse)
 def recover(request: RecoveryRequest):
-
     screenshot_path = (
         Path(__file__).resolve().parent.parent
         / "artifacts"
         / f"recovery_{uuid4().hex}.png"
     )
 
-    browser = None
-
     try:
         with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
 
-            browser = playwright.chromium.launch(
-                headless=True
-            )
+            try:
+                page = browser.new_page()
 
-            page = browser.new_page()
-
-            page.goto(
-                str(request.url),
-                wait_until="domcontentloaded",
-                timeout=20000
-            )
-
-            result = recover_failed_locator(
-                page=page,
-                failed_locator=request.failed_locator,
-                screenshot_path=str(screenshot_path)
-            )
-
-            recovery_plan = result.get("recovery_plan", {})
-
-            browser_validation = result.get(
-                "browser_validation"
-            )
-
-            if browser_validation is None:
-                browser_validation = recovery_plan.get(
-                    "validation"
+                page.goto(
+                    str(request.url),
+                    wait_until="domcontentloaded",
+                    timeout=20000
                 )
 
-            return {
-                "success": result.get("success", False),
-                "message": result.get(
-                    "message",
-                    "Recovery process completed"
-                ),
-                "old_locator": request.failed_locator,
-                "new_locator": (
-                    result.get("new_locator")
-                    or recovery_plan.get("suggested_locator")
-                ),
-                "browser_validation": browser_validation
-            }
+                result = recover_failed_locator(
+                    page=page,
+                    failed_locator=request.failed_locator,
+                    screenshot_path=str(screenshot_path)
+                )
+
+                recovery_plan = result.get(
+                    "recovery_plan",
+                    {}
+                )
+
+                browser_validation = result.get(
+                    "browser_validation"
+                )
+
+                if browser_validation is None:
+                    browser_validation = recovery_plan.get(
+                        "validation"
+                    )
+
+                return {
+                    "success": result.get(
+                        "success",
+                        False
+                    ),
+                    "message": result.get(
+                        "message",
+                        "Recovery process completed"
+                    ),
+                    "old_locator": request.failed_locator,
+                    "new_locator": (
+                        result.get("new_locator")
+                        or recovery_plan.get(
+                            "suggested_locator"
+                        )
+                    ),
+                    "browser_validation": browser_validation
+                }
+
+            finally:
+                browser.close()
 
     except Exception as error:
-
         raise HTTPException(
             status_code=500,
             detail=f"Recovery failed: {str(error)}"
         )
-
-    finally:
-
-        if browser is not None:
-            browser.close()
