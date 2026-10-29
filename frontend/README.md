@@ -1,6 +1,6 @@
 # OmniSight Self-Healing Dashboard
 
-The Streamlit dashboard follows the FastAPI self-healing module. It accepts a website URL and a failed Playwright locator, then displays the backend's recovery result and browser validation. Demo preview mode shows sample success and failure results without calling the API.
+The Streamlit dashboard follows the FastAPI self-healing module. It accepts a website URL and a failed Playwright locator, then displays the backend's recovery result and browser validation. Demo preview mode shows sample successful recovery, failed recovery, and rejected ambiguous locator results without calling the API.
 
 ## Run locally
 

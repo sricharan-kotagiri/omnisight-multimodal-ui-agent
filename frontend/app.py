@@ -121,17 +121,39 @@ def demo_result(site_url: str, failed_locator: str, scenario: str) -> dict[str, 
             "url": site_url,
         }
 
+    if scenario == "Recovery fails":
+        return {
+            "success": False,
+            "message": "AI locator failed browser validation. Review the page and locator before trying again.",
+            "old_locator": failed_locator,
+            "new_locator": None,
+            "browser_validation": {
+                "valid": False,
+                "message": "The suggested element could not be verified as unique, visible and enabled.",
+                "match_count": 0,
+            },
+            "recovery_plan": {"status": "validation_failed", "validation": {"valid": False}},
+            "screenshot_path": str(DEMO_SCREENSHOT),
+            "demo_scenario": scenario,
+            "url": site_url,
+        }
+
+    ambiguous_locator = 'get_by_role("button", name="Submit")'
     return {
         "success": False,
-        "message": "AI locator failed browser validation. Review the page and locator before trying again.",
+        "message": "The suggested locator matched multiple elements, so OmniSight rejected it as unsafe.",
         "old_locator": failed_locator,
-        "new_locator": None,
+        "new_locator": ambiguous_locator,
         "browser_validation": {
             "valid": False,
-            "message": "The suggested element could not be verified as unique, visible and enabled.",
-            "match_count": 0,
+            "message": "This locator matched 2 elements. A recovery locator must identify one visible, enabled element.",
+            "match_count": 2,
         },
-        "recovery_plan": {"status": "validation_failed", "validation": {"valid": False}},
+        "recovery_plan": {
+            "suggested_locator": ambiguous_locator,
+            "status": "validation_failed",
+            "validation": {"valid": False, "match_count": 2},
+        },
         "screenshot_path": str(DEMO_SCREENSHOT),
         "demo_scenario": scenario,
         "url": site_url,
@@ -213,7 +235,7 @@ with st.sidebar:
     if mode == "Demo preview":
         demo_scenario = st.selectbox(
             "Preview outcome",
-            ["Recovery succeeds", "Recovery fails"],
+            ["Recovery succeeds", "Recovery fails", "Ambiguous match rejected"],
             help="Show sample recovery responses without calling the API.",
         )
         st.info("Preview mode uses sample data. It does not open a browser or call the API.")
