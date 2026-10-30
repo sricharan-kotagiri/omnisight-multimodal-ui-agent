@@ -1,3 +1,0 @@
-
-      - name: Run tests
-        run: pytest --tracing retain-on-failure
