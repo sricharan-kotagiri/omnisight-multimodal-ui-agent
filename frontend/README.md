@@ -16,6 +16,16 @@ The dashboard's default API address is `http://127.0.0.1:8000`. The backend must
 
 The shared light canvas, teal accent, and dark sidebar theme are configured in `.streamlit/config.toml`. The dashboard uses native Streamlit controls so the visual structure stays easy to maintain.
 
+## Preview the recovery scenarios
+
+In **Demo preview**, enter any valid website URL and a sample failed Playwright locator, choose an outcome in the sidebar, then select **Recover locator**. Demo mode does not visit the URL or call the API.
+
+- **Recovery succeeds** shows a unique, validated replacement locator.
+- **Recovery fails** shows a suggestion that could not be validated.
+- **Ambiguous match rejected** shows a candidate matching two elements, which validation rejects.
+
+Review the screenshot and technical details to see how each sample response appears in the dashboard.
+
 ## Current backend integration
 
 The current FastAPI app exposes `GET /` and `GET /health`. The dashboard checks those health and OpenAPI endpoints. It enables live recovery only after FastAPI publishes `POST /recover` in `/openapi.json`.
