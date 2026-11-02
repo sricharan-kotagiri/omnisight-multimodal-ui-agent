@@ -9,7 +9,8 @@ def apply_approved_button_fix(
     if not approved:
         return {
             "success": False,
-            "message": "Human approval is required before applying the fix"
+            "message": "Human approval is required before applying the fix",
+            "validation": "not_run"
         }
 
     container = page.locator(".form-box")
@@ -17,12 +18,17 @@ def apply_approved_button_fix(
     if container.count() != 1:
         return {
             "success": False,
-            "message": "Form container not found or ambiguous"
+            "message": "Form container not found or ambiguous",
+            "validation": "failed"
         }
 
     button = page.locator(".submit-button")
 
+    # Capture the original UI state
     if button.count() == 0:
+        before = "missing"
+        repair_action = "created"
+
         container.evaluate("""
             (element) => {
                 const button = document.createElement("button");
@@ -34,6 +40,9 @@ def apply_approved_button_fix(
         """)
 
     elif button.count() == 1:
+        before = "visible" if button.is_visible() else "hidden"
+        repair_action = "revealed"
+
         button.evaluate("""
             (element) => {
                 element.textContent = "Create Account";
@@ -43,10 +52,12 @@ def apply_approved_button_fix(
                 element.style.pointerEvents = "auto";
             }
         """)
+
     else:
         return {
             "success": False,
-            "message": "Multiple submit buttons found"
+            "message": "Multiple submit buttons found",
+            "validation": "failed"
         }
 
     repaired_button = page.locator(".submit-button")
@@ -63,23 +74,38 @@ def apply_approved_button_fix(
             element.style.visibility = "visible";
             element.style.display = "block";
             element.style.opacity = "1";
+            element.style.pointerEvents = "auto";
         }
     """)
+
+    # Validate repaired UI
+    if repaired_button.count() != 1:
+        return {
+            "success": False,
+            "message": "Repaired button is missing or ambiguous",
+            "validation": "failed"
+        }
 
     if not repaired_button.is_visible():
         return {
             "success": False,
-            "message": "Button is still not visible"
+            "message": "Button is still not visible",
+            "validation": "failed"
         }
 
     if not repaired_button.is_enabled():
         return {
             "success": False,
-            "message": "Button is disabled"
+            "message": "Button is disabled",
+            "validation": "failed"
         }
 
     return {
         "success": True,
-        "message": "UI repair successful. Button is visible and enabled.",
-        "button_text": repaired_button.inner_text()
+        "message": "UI repair successful.",
+        "element": repaired_button.inner_text(),
+        "before": before,
+        "after": "visible",
+        "repair_action": repair_action,
+        "validation": "passed"
     }
