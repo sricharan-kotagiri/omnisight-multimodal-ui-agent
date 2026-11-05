@@ -1,33 +1,29 @@
 
+from unittest.mock import patch, MagicMock
 from ai_self_healing.analyzer import analyze_ui_failure
 
-# Step 1: Browser automation failure
-error_message = """
-TimeoutError: Element with selector '#login-btn' not found.
-"""
 
-# Step 2: Current webpage DOM content
-dom_content = """
-<html>
-<head>
-    <title>Login Page</title>
-</head>
-<body>
-    <h1>Welcome</h1>
-    <button id="signin-btn">Login</button>
-</body>
-</html>
-"""
+def test_analyze_ui_failure():
 
-# Step 3: Send error and DOM to Gemini AI
-print("\nAnalyzing UI failure using Gemini AI...")
+    error_message = "TimeoutError: #login-btn not found."
 
-result = analyze_ui_failure(
-    error_message,
-    dom_content
-)
+    dom_content = '<button id="signin-btn">Login</button>'
 
-# Step 4: Display AI analysis
-print("\n========== AI ANALYSIS RESULT ==========")
-print(result)
-print("========================================")
+    mock_response = MagicMock()
+    mock_response.text = """
+    Problem: Login button locator changed.
+    Affected Element: Login button
+    Suggested Locator: #signin-btn
+    Reason: The button exists in the DOM.
+    """
+
+    with patch(
+        "ai_self_healing.analyzer.client.models.generate_content",
+        return_value=mock_response
+    ) as mock_gemini:
+
+        result = analyze_ui_failure(error_message, dom_content)
+
+        assert result is not None
+        assert "#signin-btn" in result
+        mock_gemini.assert_called_once()
