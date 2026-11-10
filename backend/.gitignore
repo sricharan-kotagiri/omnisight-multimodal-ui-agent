@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment files (never commit secrets)
+.env
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.testdb
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Alembic
+app/database/migrations/versions/*.py
+
+# Docker
+.dockerignore
+
+# macOS
+.DS_Store

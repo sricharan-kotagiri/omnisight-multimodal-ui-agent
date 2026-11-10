@@ -1,0 +1,27 @@
+ImportError while loading conftest 'c:\Users\srich\internship_project\backend\tests\conftest.py'.
+tests\conftest.py:18: in <module>
+    from app.main import app
+app\main.py:21: in <module>
+    from app.api.v1.router import api_router
+app\api\v1\router.py:7: in <module>
+    from app.api.v1 import healing, tasks
+app\api\v1\tasks.py:27: in <module>
+    from app.services import execution_service, task_service
+app\services\execution_service.py:23: in <module>
+    from app.models.execution_log import ExecutionLog
+app\models\execution_log.py:23: in <module>
+    class ExecutionLog(Base):
+app\models\execution_log.py:50: in ExecutionLog
+    metadata_: Mapped[dict | None] = mapped_column(
+..\..\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\sqlalchemy\orm\_orm_constructors.py:358: in mapped_column
+    return MappedColumn(
+..\..\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\sqlalchemy\orm\properties.py:598: in __init__
+    self.column = cast("Column[_T]", Column(*arg, **kw))
+                                     ^^^^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\sqlalchemy\sql\schema.py:2450: in __init__
+    self._init_items(*cast(_typing_Sequence[SchemaItem], l_args))
+..\..\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\sqlalchemy\sql\schema.py:249: in _init_items
+    spwd(self, **kw)
+..\..\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\sqlalchemy\sql\base.py:1840: in _set_parent_with_dispatch
+    self._set_parent(parent, **kw)
+E   TypeError: Column._set_parent() missing 2 required keyword-only arguments: 'all_names' and 'allow_replacements'

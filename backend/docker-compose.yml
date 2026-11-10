@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: omnisight
+      POSTGRES_PASSWORD: omnisight
+      POSTGRES_DB: omnisight
+    volumes:
+      - omnisight_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omnisight -d omnisight"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Override DATABASE_URL so the backend always finds postgres via Docker DNS
+      DATABASE_URL: postgresql+asyncpg://omnisight:omnisight@postgres:5432/omnisight
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source for hot-reload in development
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+volumes:
+  omnisight_postgres_data:
