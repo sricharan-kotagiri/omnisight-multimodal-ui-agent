@@ -1,7 +1,0 @@
-
-google-genai
-python-dotenv
-lxml
-fastapi
-uvicorn[standard]
-playwright
